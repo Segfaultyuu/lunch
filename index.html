@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#15110d">
+<title>摇骰定食 · 今天吃什么</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#15110d;
+  --ink-2:#1e1711;
+  --ink-3:#2a211a;
+  --blood:#9c1f1a;
+  --blood-hi:#c22a22;
+  --gold:#d9a93f;
+  --gold-hi:#f0d68d;
+  --gold-dim:#8a6a26;
+  --cream:#f4ead6;
+  --cream-2:#e6d8bd;
+
+  --serif:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --mono:"DM Mono","SFMono-Regular",ui-monospace,"Menlo",monospace;
+
+  --die:116px;
+  --half:calc(var(--die) / 2);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+html,body{height:100%}
+
+body{
+  font-family:var(--serif);
+  background:var(--ink);
+  color:var(--cream);
+  overflow-x:hidden;
+  touch-action:manipulation;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ─── atmosphere ─────────────────────────────────────────── */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.bg::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(120% 65% at 50% -8%, rgba(217,169,63,.20), transparent 62%),
+    radial-gradient(85% 50% at 50% 42%, rgba(156,31,26,.26), transparent 70%),
+    radial-gradient(130% 80% at 50% 115%, rgba(0,0,0,.72), transparent 60%),
+    linear-gradient(176deg,#1e1711 0%,#15110d 48%,#100c09 100%);
+}
+
+/* woven cloth texture */
+.bg::after{
+  content:"";position:absolute;inset:0;opacity:.055;
+  background-image:
+    repeating-linear-gradient(45deg, var(--gold) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, var(--gold) 0 1px, transparent 1px 7px);
+}
+
+.grain{
+  position:fixed;inset:-50%;z-index:1;pointer-events:none;opacity:.26;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+  animation:grain 7s steps(6,end) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)}
+  40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,-2%)}
+  80%{transform:translate(3%,1%)} 100%{transform:translate(0,0)}
+}
+
+/* ─── decorative grid-breaking title ────────────────────── */
+.ghost-title{
+  position:fixed;left:-.14em;top:50%;transform:translateY(-50%);
+  z-index:1;pointer-events:none;
+  writing-mode:vertical-rl;
+  font-size:clamp(78px,23vw,140px);
+  font-weight:900;line-height:.92;letter-spacing:-.04em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(217,169,63,.13);
+  opacity:0;animation:ghostIn 1.8s .25s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes ghostIn{from{opacity:0;transform:translateY(-50%) translateX(-26px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
+
+/* ─── shell ──────────────────────────────────────────────── */
+.wrap{
+  position:relative;z-index:2;
+  min-height:100%;
+  max-width:480px;margin:0 auto;
+  padding:26px 22px calc(26px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;
+}
+
+.rise{opacity:0;animation:rise .9s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* ─── header ─────────────────────────────────────────────── */
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:nowrap}
+
+.brand{min-width:0;flex:1 1 auto}
+.brand-cn{
+  font-size:15px;font-weight:900;letter-spacing:.38em;
+  color:var(--gold-hi);text-indent:.38em;white-space:nowrap;
+}
+.brand-en{
+  margin-top:7px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.17em;
+  text-transform:uppercase;color:rgba(244,234,214,.42);
+}
+
+.seal{
+  flex:0 0 auto;width:52px;height:52px;border-radius:50%;
+  background:
+    radial-gradient(120% 120% at 32% 24%, var(--blood-hi), var(--blood) 58%, #6e1511 100%);
+  border:1.5px solid rgba(240,214,141,.6);
+  box-shadow:0 5px 16px rgba(0,0,0,.5), inset 0 1px 2px rgba(255,255,255,.22);
+  display:grid;place-items:center;
+  font-size:25px;font-weight:900;color:var(--cream);
+  transform:rotate(-9deg);
+  text-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+/* ─── stage ──────────────────────────────────────────────── */
+.stage{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px 0 14px;gap:34px;
+}
+
+.scene{
+  width:var(--die);height:var(--die);
+  perspective:760px;perspective-origin:50% 42%;
+  position:relative;
+  cursor:pointer;
+}
+.scene::after{ /* shadow */
+  content:"";position:absolute;left:50%;bottom:-32px;
+  width:122%;height:22px;transform:translateX(-50%);
+  background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.62), transparent 72%);
+  filter:blur(3px);
+  transition:transform .4s ease, opacity .4s ease;
+}
+.scene.rolling::after{transform:translateX(-50%) scale(.72);opacity:.5}
+
+.cube{
+  position:absolute;inset:0;
+  transform-style:preserve-3d;
+  transform:rotateX(-18deg) rotateY(26deg);
+  transition:transform 1.45s cubic-bezier(.2,.86,.22,1);
+}
+
+.face{
+  position:absolute;inset:0;
+  border-radius:18px;
+  background:linear-gradient(152deg,#fffaef 0%,var(--cream) 46%,var(--cream-2) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(42,33,26,.14),
+    inset 0 -8px 16px rgba(42,33,26,.11),
+    inset 0 7px 12px rgba(255,255,255,.6);
+  display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);
+  padding:15%;gap:4%;
+  backface-visibility:hidden;
+}
+.pip{border-radius:50%;background:transparent}
+.pip.on{
+  background:radial-gradient(60% 60% at 36% 30%, #4c3f33, var(--ink-3) 70%);
+  box-shadow:inset 0 -1px 1.5px rgba(255,255,255,.2), 0 .5px 1px rgba(255,255,255,.4);
+}
+.face.red .pip.on{
+  background:radial-gradient(60% 60% at 36% 30%, var(--blood-hi), #7c1511 72%);
+}
+
+.f1{transform:translateZ(var(--half))}
+.f6{transform:rotateY(180deg) translateZ(var(--half))}
+.f3{transform:rotateY(90deg)  translateZ(var(--half))}
+.f4{transform:rotateY(-90deg) translateZ(var(--half))}
+.f5{transform:rotateX(90deg)  translateZ(var(--half))}
+.f2{transform:rotateX(-90deg) translateZ(var(--half))}
+
+/* ─── roll button ────────────────────────────────────────── */
+.roll{
+  position:relative;
+  width:94px;height:94px;border-radius:50%;border:none;
+  background:
+    radial-gradient(120% 120% at 30% 22%, #fbeec1, var(--gold) 46%, var(--gold-dim) 100%);
+  box-shadow:
+    0 12px 26px rgba(0,0,0,.52),
+    0 0 0 1px rgba(255,255,255,.3) inset,
+    0 0 0 7px rgba(217,169,63,.1),
+    0 0 36px rgba(217,169,63,.22);
+  color:#2a1d08;
+  font-family:var(--serif);font-size:31px;font-weight:900;
+  letter-spacing:.06em;
+  cursor:pointer;
+  transition:transform .16s cubic-bezier(.3,1.5,.5,1), box-shadow .25s ease, filter .3s;
+}
+.roll:active{transform:scale(.93)}
+.roll[disabled]{filter:grayscale(.65) brightness(.72);cursor:default}
+.roll::after{
+  content:"";position:absolute;inset:-7px;border-radius:50%;
+  border:1px dashed rgba(240,214,141,.35);
+  animation:spin 22s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.roll.nope{animation:nope .42s ease}
+@keyframes nope{
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)}
+  45%{transform:translateX(7px)} 70%{transform:translateX(-4px)}
+}
+
+.hint{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
+  color:rgba(244,234,214,.34);text-transform:uppercase;
+}
+
+/* ─── result ticket ──────────────────────────────────────── */
+.ticket{
+  position:relative;
+  background:linear-gradient(170deg,#fdf6e6,var(--cream) 60%,#eadfc4);
+  color:var(--ink-3);
+  border-radius:4px;
+  padding:26px 22px 22px;
+  box-shadow:0 20px 40px rgba(0,0,0,.52), 0 1px 0 rgba(255,255,255,.35) inset;
+  transform:rotate(-.7deg) translateY(22px) scale(.95);
+  opacity:0;display:none;
+  transition:opacity .5s ease, transform .66s cubic-bezier(.16,1,.3,1);
+}
+.ticket.mounted{display:block}
+.ticket.show{opacity:1;transform:rotate(-.7deg) translateY(0) scale(1)}
+
+/* perforated top edge */
+.ticket::before{
+  content:"";position:absolute;top:-1px;left:0;right:0;height:9px;
+  background:radial-gradient(circle at 5px -2px, transparent 5px, var(--cream) 5.5px);
+  background-size:10px 9px;
+  filter:drop-shadow(0 0 0 transparent);
+}
+.ticket::after{
+  content:"";position:absolute;inset:7px 8px 8px;
+  border:1px solid rgba(42,33,26,.16);border-radius:2px;pointer-events:none;
+}
+
+.t-kicker{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.26em;
+  text-transform:uppercase;color:rgba(42,33,26,.5);
+}
+.t-kicker::after{content:"";flex:1;height:1px;background:rgba(42,33,26,.18)}
+
+.t-name{
+  margin:12px 0 0;
+  font-size:clamp(38px,11.5vw,52px);font-weight:900;line-height:1.02;
+  letter-spacing:-.025em;
+  color:var(--blood);
+}
+.t-fortune{
+  margin-top:13px;padding-top:13px;
+  border-top:1px dashed rgba(42,33,26,.26);
+  font-size:14.5px;line-height:1.65;color:rgba(42,33,26,.76);
+}
+.t-meta{
+  margin-top:14px;display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  color:rgba(42,33,26,.46);
+}
+
+.t-stamp{
+  position:absolute;right:16px;top:-18px;
+  width:62px;height:62px;border-radius:50%;
+  background:radial-gradient(120% 120% at 34% 26%, var(--blood-hi), var(--blood) 60%, #6c1410);
+  border:2px solid rgba(253,246,230,.9);
+  box-shadow:0 7px 18px rgba(0,0,0,.45);
+  display:grid;place-items:center;
+  color:var(--cream);font-size:13px;font-weight:900;line-height:1.08;text-align:center;
+  letter-spacing:.04em;
+}
+.ticket.show .t-stamp{animation:stampIn .72s .16s cubic-bezier(.3,1.7,.45,1) backwards}
+@keyframes stampIn{
+  from{transform:rotate(-46deg) scale(1.9);opacity:0}
+  to{transform:rotate(11deg) scale(1);opacity:1}
+}
+.t-stamp{transform:rotate(11deg)}
+
+.ticket.show .t-kicker{animation:rise .6s .1s cubic-bezier(.16,1,.3,1) backwards}
+.ticket.show .t-name{animation:rise .7s .18s cubic-bezier(.16,1,.3,1) backwards}
+.ticket.show .t-fortune{animation:rise .7s .28s cubic-bezier(.16,1,.3,1) backwards}
+.ticket.show .t-meta{animation:rise .7s .36s cubic-bezier(.16,1,.3,1) backwards}
+
+/* ─── candidates ─────────────────────────────────────────── */
+.cands{margin-top:20px}
+
+.cands-bar{
+  width:100%;background:none;border:none;cursor:pointer;overflow:hidden;
+  display:flex;align-items:center;gap:9px;
+  padding:11px 2px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  color:rgba(244,234,214,.5);
+}
+.cands-bar b{color:var(--gold-hi);font-weight:500}
+.cands-bar .cb-count,.cands-bar .cb-tip{white-space:nowrap;flex:0 0 auto}
+.cands-bar .cb-tip{color:rgba(244,234,214,.34)}
+.cands-bar .line{flex:1 1 auto;min-width:8px;height:1px;background:rgba(217,169,63,.22)}
+.cands-bar .arrow{flex:0 0 auto;transition:transform .34s cubic-bezier(.16,1,.3,1);font-size:13px;color:var(--gold)}
+.cands.open .cands-bar .arrow{transform:rotate(180deg)}
+
+.chips{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:7px;
+  max-height:0;overflow:hidden;
+  transition:max-height .44s cubic-bezier(.16,1,.3,1), opacity .3s ease, margin .44s;
+  opacity:0;
+}
+.cands.open .chips{max-height:460px;opacity:1;margin-top:5px}
+
+.chip{
+  border:1px solid rgba(217,169,63,.3);
+  background:rgba(244,234,214,.05);
+  color:var(--cream);
+  border-radius:3px;padding:10px 4px;
+  font-family:var(--serif);font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.chip:active{transform:scale(.95)}
+.chip.off{
+  color:rgba(244,234,214,.26);
+  border-color:rgba(244,234,214,.1);
+  background:transparent;
+  text-decoration:line-through;
+  text-decoration-color:rgba(156,31,26,.8);
+  text-decoration-thickness:1.5px;
+}
+
+footer{
+  margin-top:16px;padding-top:14px;
+  border-top:1px solid rgba(217,169,63,.14);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:rgba(244,234,214,.28);
+}
+.shake-btn{
+  background:none;border:1px solid rgba(217,169,63,.26);
+  color:rgba(244,234,214,.5);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  padding:6px 10px;border-radius:2px;cursor:pointer;transition:all .2s;
+}
+.shake-btn.on{color:var(--gold-hi);border-color:rgba(217,169,63,.6);background:rgba(217,169,63,.1)}
+.shake-btn[hidden]{display:none}
+
+@media (min-width:420px) and (min-height:720px){
+  :root{--die:132px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;animation-delay:0ms !important;
+    animation-iteration-count:1 !important;transition-duration:.12s !important;
+  }
+  .rise,.ghost-title{opacity:1 !important}
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="grain"></div>
+<div class="ghost-title" aria-hidden="true">今天吃什么</div>
+
+<div class="wrap">
+
+  <header class="rise" style="animation-delay:.05s">
+    <div class="brand">
+      <div class="brand-cn">摇骰定食</div>
+      <div class="brand-en">roll · settle the meal</div>
+    </div>
+    <div class="seal" aria-hidden="true">食</div>
+  </header>
+
+  <main class="stage">
+
+    <div class="scene rise" id="scene" role="button" tabindex="0"
+         aria-label="摇骰子" style="animation-delay:.18s">
+      <div class="cube" id="cube"></div>
+    </div>
+
+    <button class="roll rise" id="roll" style="animation-delay:.3s">摇</button>
+
+    <div class="hint rise" id="hint" style="animation-delay:.4s">点骰子或按钮</div>
+
+  </main>
+
+  <section class="ticket" id="ticket" aria-live="polite">
+    <div class="t-stamp" aria-hidden="true">今日<br>定食</div>
+    <div class="t-kicker">天意如此</div>
+    <h1 class="t-name" id="tName">—</h1>
+    <p class="t-fortune" id="tFortune">—</p>
+    <div class="t-meta">
+      <span id="tIndex">NO.00</span>
+      <span id="tCount">第 0 摇</span>
+    </div>
+  </section>
+
+  <section class="cands rise" id="cands" style="animation-delay:.5s">
+    <button class="cands-bar" id="candsBar" aria-expanded="false">
+      <span class="cb-count">候选 <b id="candNum">—</b>／<span id="candTotal">—</span></span>
+      <span class="line"></span>
+      <span class="cb-tip">划掉不吃的</span>
+      <span class="arrow">▾</span>
+    </button>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <footer class="rise" style="animation-delay:.58s">
+    <span>吃饭不该用脑</span>
+    <button class="shake-btn" id="shakeBtn" hidden>摇一摇 off</button>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── the menu ──────────────────────────────────────────── */
+  var MENU = [
+    { name:"川巷",      f:"今天的嘴，交给辣椒管。" },
+    { name:"米村拌饭",  f:"一碗拌开，万事太平。" },
+    { name:"上海小笼包",f:"第一口先吸汤，别烫着。" },
+    { name:"喜鹊炸饺",  f:"咬开那一声脆，值了。" },
+    { name:"湘之熏",    f:"下饭选手，米饭多打一两。" },
+    { name:"花婆婆",    f:"不用做选择的那种踏实。" },
+    { name:"新旺",      f:"冻柠茶走一杯，少甜。" },
+    { name:"唐大小姐",  f:"今天就当被人请了一顿。" },
+    { name:"杨国福",    f:"自己挑的料，怪不了别人。" },
+    { name:"coco",      f:"正餐不算，这是情绪。" },
+    { name:"donki",     f:"逛着挑，挑着就饱了。" },
+    { name:"shake shack", f:"偶尔叛变一次西餐。" },
+    { name:"百米香",    f:"熟门熟路，不用纠结。" },
+    { name:"贵州米粉",  f:"酸和辣，一起上。" },
+    { name:"namnam",    f:"一碗米粉，换个国家。" },
+    { name:"李与白",    f:"简简单单，吃完不撑。" },
+    { name:"兰亭序",    f:"今天吃得有点仪式感。" }
+  ];
+
+  var PIPS = {
+    1:[4], 2:[0,8], 3:[0,4,8],
+    4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]
+  };
+  var FACE_ROT = {
+    1:{x:0,   y:0},   2:{x:90, y:0},    3:{x:0, y:-90},
+    4:{x:0,   y:90},  5:{x:-90,y:0},    6:{x:0, y:180}
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var cube = $("cube"), scene = $("scene"), rollBtn = $("roll"), hint = $("hint");
+  var ticket = $("ticket"), tName = $("tName"), tFortune = $("tFortune");
+  var tIndex = $("tIndex"), tCount = $("tCount");
+  var chipsBox = $("chips"), candNum = $("candNum"), cands = $("cands"), candsBar = $("candsBar");
+
+  var KEY = "eatwhat.excluded.v1";
+  var excluded = load();
+  var rolling = false, spinX = 0, spinY = 0, lastPick = -1, rolls = 0;
+
+  /* ── build the die ─────────────────────────────────────── */
+  Object.keys(FACE_ROT).forEach(function(n){
+    var face = document.createElement("div");
+    face.className = "face f" + n + (n === "1" || n === "4" ? " red" : "");
+    for (var i = 0; i < 9; i++){
+      var pip = document.createElement("i");
+      pip.className = "pip" + (PIPS[n].indexOf(i) > -1 ? " on" : "");
+      face.appendChild(pip);
+    }
+    cube.appendChild(face);
+  });
+
+  /* ── candidates ────────────────────────────────────────── */
+  function load(){
+    try {
+      var raw = localStorage.getItem(KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.filter(function(i){
+        return typeof i === "number" && i >= 0 && i < MENU.length;
+      }) : [];
+    } catch (e){ return []; }
+  }
+  function save(){
+    try { localStorage.setItem(KEY, JSON.stringify(excluded)); } catch (e){}
+  }
+
+  function pool(){
+    var out = [];
+    for (var i = 0; i < MENU.length; i++) if (excluded.indexOf(i) < 0) out.push(i);
+    return out;
+  }
+
+  function buildChips(){
+    MENU.forEach(function(item, i){
+      var b = document.createElement("button");
+      b.className = "chip";
+      b.textContent = item.name;
+      b.addEventListener("click", function(){
+        var at = excluded.indexOf(i);
+        if (at > -1) excluded.splice(at, 1); else excluded.push(i);
+        save(); syncChips();
+      });
+      chipsBox.appendChild(b);
+    });
+  }
+
+  function syncChips(){
+    var kids = chipsBox.children, n = 0;
+    for (var i = 0; i < kids.length; i++){
+      var off = excluded.indexOf(i) > -1;
+      kids[i].classList.toggle("off", off);
+      kids[i].setAttribute("aria-pressed", String(!off));
+      if (!off) n++;
+    }
+    candNum.textContent = n;
+    rollBtn.disabled = n === 0;
+    if (n === 0) hint.textContent = "全被你划掉了";
+    else if (rolls === 0) hint.textContent = "点骰子或按钮";
+  }
+
+  $("candTotal").textContent = MENU.length;
+  buildChips();
+  syncChips();
+
+  candsBar.addEventListener("click", function(){
+    var open = cands.classList.toggle("open");
+    candsBar.setAttribute("aria-expanded", String(open));
+  });
+
+  /* ── rolling ───────────────────────────────────────────── */
+  function buzz(ms){
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e){}
+  }
+
+  function roll(){
+    if (rolling) return;
+
+    var p = pool();
+    if (!p.length){
+      rollBtn.classList.remove("nope");
+      void rollBtn.offsetWidth;
+      rollBtn.classList.add("nope");
+      buzz([18, 60, 18]);
+      cands.classList.add("open");
+      candsBar.setAttribute("aria-expanded", "true");
+      return;
+    }
+
+    rolling = true;
+    scene.classList.add("rolling");
+    ticket.classList.remove("show");
+    hint.textContent = "⋯";
+    buzz(14);
+
+    /* pick a face for the tumble, and a dish for the verdict */
+    var face = 1 + Math.floor(Math.random() * 6);
+    var pick = p[Math.floor(Math.random() * p.length)];
+    if (p.length > 1 && pick === lastPick){
+      pick = p[(p.indexOf(pick) + 1 + Math.floor(Math.random() * (p.length - 1))) % p.length];
+    }
+    lastPick = pick;
+    rolls++;
+
+    var r = FACE_ROT[face];
+    spinX += 360 * (2 + Math.floor(Math.random() * 2));
+    spinY += 360 * (2 + Math.floor(Math.random() * 3));
+    cube.style.transform = "rotateX(" + (spinX + r.x - 18) + "deg) rotateY(" + (spinY + r.y + 26) + "deg)";
+
+    setTimeout(function(){ reveal(pick, face); }, 1120);
+    setTimeout(function(){
+      rolling = false;
+      scene.classList.remove("rolling");
+    }, 1480);
+  }
+
+  function reveal(i, face){
+    var item = MENU[i];
+    tName.textContent = item.name;
+    tFortune.textContent = item.f;
+    tIndex.textContent = "NO." + (i + 1 < 10 ? "0" : "") + (i + 1) + " · 骰 " + face;
+    tCount.textContent = "第 " + rolls + " 摇";
+    ticket.classList.add("mounted");
+    requestAnimationFrame(function(){ ticket.classList.add("show"); });
+    hint.textContent = rolls === 1 ? "不服就再摇" : "再摇一次";
+    buzz([10, 36, 22]);
+
+    /* on short screens make sure the verdict is actually on screen */
+    setTimeout(function(){
+      var r = ticket.getBoundingClientRect();
+      if (r.bottom > window.innerHeight - 8 && ticket.scrollIntoView){
+        try { ticket.scrollIntoView({ behavior:"smooth", block:"end" }); }
+        catch (e){ ticket.scrollIntoView(false); }
+      }
+    }, 520);
+  }
+
+  rollBtn.addEventListener("click", roll);
+  scene.addEventListener("click", roll);
+  scene.addEventListener("keydown", function(e){
+    if (e.key === "Enter" || e.key === " "){ e.preventDefault(); roll(); }
+  });
+
+  /* ── shake to roll (opt-in) ────────────────────────────── */
+  var shakeBtn = $("shakeBtn"), shakeOn = false, lastShake = 0;
+
+  function onMotion(e){
+    var a = e.accelerationIncludingGravity;
+    if (!a) return;
+    var mag = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
+    var now = Date.now();
+    if (mag > 32 && now - lastShake > 1400){ lastShake = now; roll(); }
+  }
+
+  if (window.DeviceMotionEvent){
+    shakeBtn.hidden = false;
+    shakeBtn.addEventListener("click", function(){
+      if (shakeOn){
+        window.removeEventListener("devicemotion", onMotion);
+        shakeOn = false;
+        shakeBtn.classList.remove("on");
+        shakeBtn.textContent = "摇一摇 off";
+        return;
+      }
+      var go = function(){
+        window.addEventListener("devicemotion", onMotion);
+        shakeOn = true;
+        shakeBtn.classList.add("on");
+        shakeBtn.textContent = "摇一摇 on";
+      };
+      var RP = window.DeviceMotionEvent.requestPermission;
+      if (typeof RP === "function"){
+        RP().then(function(s){
+          if (s === "granted") go();
+          else shakeBtn.textContent = "摇一摇 被拒";
+        }).catch(function(){ shakeBtn.hidden = true; });
+      } else go();
+    });
+  }
+})();
+</script>
+</body>
+</html>
